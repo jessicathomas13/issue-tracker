@@ -4,7 +4,7 @@ A lightweight Jira/Linear-style issue tracker. Backend built with ASP.NET Core, 
 
 ## Backend setup
 
-Requirements: .NET 8 SDK, SQL Server (LocalDB is fine for local dev).
+Requirements: .NET 10 SDK, SQL Server (LocalDB is fine for local dev).
 
 ```bash
 cd IssueTracker.Api
