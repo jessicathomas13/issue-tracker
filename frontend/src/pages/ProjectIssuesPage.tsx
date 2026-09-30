@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { createIssue, getIssues, updateIssueStatus } from '../api/issues'
-import { addProjectMember, getProjectMembers } from '../api/projects'
+import { addProjectMember, getProjectMembers, updateProjectMemberRole } from '../api/projects'
 import { ApiError } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import type { Issue, IssuePriority, IssueStatus, ProjectMember, ProjectRole } from '../types'
@@ -175,6 +175,16 @@ export function ProjectIssuesPage() {
             
             setMembers(updatedMembers)
           }}
+
+          onRoleChange={async (userId, role) => {await updateProjectMemberRole(
+              auth.token,
+              id,
+              userId,
+              role,
+            )
+
+            setMembers((current) => current.map((member) => member.userId === userId ? { ...member, role } : member))
+          }}
         />
       )}
 
@@ -252,17 +262,21 @@ function ProjectMembersModal({
     isAdmin,
     onClose,
     onAdd,
+    onRoleChange,
   }: {
     members: ProjectMember[]
     isAdmin: boolean
     onClose: () => void
     onAdd: (email: string, role: ProjectRole) => Promise<void>
+    onRoleChange: (userId: number, role: ProjectRole) => Promise<void>
   }) {
     const [email, setEmail] = useState('')
     const [role, setRole] = useState<ProjectRole>('Member')
 
     const [error, setError] = useState('')
     const [saving, setSaving] = useState(false)
+
+    const [updatingUserId, setUpdatingUserId] = useState<number | null>(null)
 
     async function submit(event: FormEvent) {
       event.preventDefault()
@@ -290,6 +304,22 @@ function ProjectMembersModal({
         )
       } finally {
         setSaving(false)
+      }
+    }
+
+    async function changeRole(userId: number, role: ProjectRole) {
+      setUpdatingUserId(userId)
+      setError('')
+
+      try {
+        await onRoleChange(userId, role)
+      } catch (err) {
+        setError(err instanceof ApiError
+            ? err.message
+            : 'Unable to update member role.',
+        )
+      } finally {
+        setUpdatingUserId(null)
       }
     }
 
@@ -335,9 +365,30 @@ function ProjectMembersModal({
                   </span>
                 </div>
 
-                <span className="member-role">
-                  {member.role}
-                </span>
+                {isAdmin ? (
+                  <select
+                    className="member-role-select"
+                    value={member.role}
+                    disabled={updatingUserId === member.userId}
+                    onChange={(event) => void changeRole(member.userId, event.target.value as ProjectRole)}
+                  >
+                    <option value="Viewer">
+                      Viewer
+                    </option>
+
+                    <option value="Member">
+                      Member
+                    </option>
+
+                    <option value="Admin">
+                      Admin
+                    </option>
+                  </select>
+                ) : (
+                  <span className="member-role">
+                    {member.role}
+                  </span>
+                )}
               </div>
             ))}
           </div>

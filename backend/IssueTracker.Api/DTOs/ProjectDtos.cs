@@ -9,3 +9,5 @@ public record ProjectSummaryDto(int Id, string Name, string? Description, int Op
 public record ProjectMemberDto(int UserId, string Name, string Email, ProjectRole Role);
 
 public record AddProjectMemberRequest(string Email, ProjectRole Role);
+
+public record UpdateProjectMemberRoleRequest(ProjectRole Role);

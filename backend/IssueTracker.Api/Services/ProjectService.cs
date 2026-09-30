@@ -91,4 +91,34 @@ public class ProjectService
 
         await _db.SaveChangesAsync();
     }
+
+    public async Task UpdateMemberRoleAsync(int projectId, int userId, UpdateProjectMemberRoleRequest request, int requestingUserId)
+    {
+        await _authz.RequireRoleAsync(projectId, requestingUserId, ProjectRole.Admin);
+
+        var member = await _db.ProjectMembers.FirstOrDefaultAsync(pm => pm.ProjectId == projectId && pm.UserId == userId) ?? throw new KeyNotFoundException("Project member not found.");
+
+        if (member.Role == request.Role)
+        {
+            return;
+        }
+
+        // Do not allow the last admin to be demoted
+        if (
+            member.Role == ProjectRole.Admin &&
+            request.Role != ProjectRole.Admin
+        )
+        {
+            var adminCount = await _db.ProjectMembers.CountAsync(pm => pm.ProjectId == projectId && pm.Role == ProjectRole.Admin);
+
+            if (adminCount <= 1)
+            {
+                throw new InvalidOperationException("A project must have at least one admin.");
+            }
+        }
+
+        member.Role = request.Role;
+
+        await _db.SaveChangesAsync();
+    }
 }

@@ -24,3 +24,11 @@ export function addProjectMember(token: string, projectId: number, email: string
     body: JSON.stringify({ email, role }),
   })
 }
+
+export function updateProjectMemberRole(token: string, projectId: number, userId: number, role: ProjectRole) {
+  return apiRequest<void>(`/projects/${projectId}/members/${userId}/role`, {
+      method: 'PATCH',
+      token,
+      body: JSON.stringify({ role }),
+    })
+}

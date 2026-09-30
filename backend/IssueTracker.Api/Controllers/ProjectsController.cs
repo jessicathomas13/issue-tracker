@@ -44,4 +44,12 @@ public class ProjectsController : ControllerBase
         await _projectService.AddMemberAsync(projectId, request, this.GetUserId());
         return NoContent();
     }
+
+    [HttpPatch("{projectId}/members/{userId}/role")]
+    public async Task<ActionResult> UpdateMemberRole(int projectId, int userId, UpdateProjectMemberRoleRequest request)
+    {
+        await _projectService.UpdateMemberRoleAsync(projectId, userId, request, this.GetUserId());
+
+        return NoContent();
+    }
 }

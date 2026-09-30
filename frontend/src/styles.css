@@ -535,3 +535,26 @@ input:focus, textarea:focus, select:focus { border-color: #9ba3af; box-shadow: 0
     grid-template-columns: 1fr;
   }
 }
+
+.member-role-select {
+  min-width: 105px;
+  padding: 6px 8px;
+  border: 1px solid #d8dce1;
+  border-radius: 7px;
+  background: #f1f2f4;
+  color: #555a61;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.member-role-select:focus {
+  outline: none;
+  border-color: #9ba2ac;
+}
+
+.member-role-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
