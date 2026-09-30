@@ -378,3 +378,85 @@ input:focus, textarea:focus, select:focus { border-color: #9ba3af; box-shadow: 0
   color: #9a9fa6;
   font-size: 11px;
 }
+
+.issue-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.issue-title-input {
+  width: min(600px, 100%);
+  box-sizing: border-box;
+  margin: 5px 0 7px;
+  padding: 9px 11px;
+  border: 1px solid #dfe2e7;
+  border-radius: 8px;
+  color: #202328;
+  font: inherit;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+.issue-title-input:focus {
+  outline: none;
+  border-color: #9ba2ac;
+}
+
+.issue-description-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #dfe2e7;
+  border-radius: 9px;
+  resize: vertical;
+  color: #4c5158;
+  font: inherit;
+  line-height: 1.7;
+}
+
+.issue-description-input:focus {
+  outline: none;
+  border-color: #9ba2ac;
+}
+
+.issue-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.detail-date-input {
+  max-width: 155px;
+  padding: 7px 8px;
+  border: 1px solid #dfe2e7;
+  border-radius: 7px;
+  background: #fff;
+  color: #33373d;
+  font: inherit;
+  font-size: 12px;
+}
+
+.detail-date-input:focus {
+  outline: none;
+  border-color: #9ba2ac;
+}
+
+.edit-details-button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #c4c6c9;
+  color: #000000;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.edit-details-button:hover {
+  background: #a7aaae;
+}

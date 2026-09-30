@@ -54,6 +54,12 @@ export function IssueDetailsPage() {
 
     const [actionError, setActionError] = useState('')
 
+    const [editingDetails, setEditingDetails] = useState(false)
+    const [editTitle, setEditTitle] = useState('')
+    const [editDescription, setEditDescription] = useState('')
+    const [editDueDate, setEditDueDate] = useState('')
+    const [savingDetails, setSavingDetails] = useState(false)
+
     const myRole: ProjectRole | undefined = members.find((member) => member.userId === auth?.userId)?.role
 
     const canEdit =
@@ -163,6 +169,7 @@ export function IssueDetailsPage() {
             )
 
             setIssue(updatedIssue)
+            await refreshActivity()
         } catch (err) {
             setActionError(
             err instanceof ApiError
@@ -242,6 +249,70 @@ export function IssueDetailsPage() {
         setActivity(activityData)
     }
 
+    function startEditingDetails() {
+        if (!issue) return
+
+        setEditTitle(issue.title)
+        setEditDescription(issue.description ?? '')
+        setEditDueDate(issue.dueDate
+            ? issue.dueDate.slice(0, 10)
+            : '',
+        )
+        
+        setActionError('')
+        setEditingDetails(true)
+    }
+
+    
+    function cancelEditingDetails() {
+        setEditingDetails(false)
+        setActionError('')
+    }
+
+    async function handleSaveDetails(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault()
+
+        if (!auth || !issue) {
+            return
+        }
+
+        if (!editTitle.trim()) {
+            setActionError('Title is required.')
+            return
+        }
+
+        setSavingDetails(true)
+        setActionError('')
+
+        try {
+            const updatedIssue = await updateIssue(
+                auth.token,
+                issue.id,
+                {
+                    title: editTitle.trim(),
+                    description: editDescription.trim(),
+
+                    // Important with the current PATCH implementation:
+                    // preserve the existing assignee.
+                    assigneeId: issue.assigneeId,
+
+                    dueDate: editDueDate
+                    ? new Date(
+                        `${editDueDate}T23:59:59`,
+                        ).toISOString()
+                    : issue.dueDate,
+                },
+            )
+
+            setIssue(updatedIssue)
+            setEditingDetails(false)
+        } catch (err) {
+            setActionError(err instanceof ApiError ? err.message : 'Unable to update issue details.')
+        } finally {
+            setSavingDetails(false)
+        }
+    }
+
     if (loading) {
         return (
         <div className="page-wrap">
@@ -290,16 +361,37 @@ export function IssueDetailsPage() {
                 Issue #{issue.id}
             </span>
 
-            <h1>{issue.title}</h1>
+            {editingDetails ? (
+                <input
+                    className="issue-title-input"
+                    value={editTitle}
+                    onChange={(event) => setEditTitle(event.target.value)}
+                    autoFocus
+                />
+                ) : (
+                <h1>{issue.title}</h1>
+            )}
 
             <p>
                 Reported by {issue.reporterName}
             </p>
             </div>
 
+            <div className="issue-header-actions">
+                {canEdit && !editingDetails && (
+                    <button
+                        className="edit-details-button"
+                        type="button"
+                        onClick={startEditingDetails}
+                    >
+                    Edit details
+                    </button>
+            )}
+
             <span className="status-pill">
-            {prettyStatus(issue.status)}
+                {prettyStatus(issue.status)}
             </span>
+            </div>
         </header>
 
         <div className="issue-detail-grid">
@@ -311,10 +403,45 @@ export function IssueDetailsPage() {
                 Description
                 </span>
 
-                <p className="issue-detail-description">
-                {issue.description ||
-                    'No description provided.'}
-                </p>
+                {editingDetails ? (
+                    <textarea
+                        className="issue-description-input"
+                        value={editDescription}
+                        onChange={(event) => setEditDescription(event.target.value)}
+                        rows={7}
+                        placeholder="Add a description..."
+                    />
+                    ) : (
+                    <p className="issue-detail-description">
+                        {issue.description || 'No description provided.'}
+                    </p>
+                )}
+
+                {editingDetails && (
+                    <form
+                        className="issue-edit-actions"
+                        onSubmit={handleSaveDetails}
+                    >
+                        <button
+                            className="secondary-button"
+                            type="button"
+                            disabled={savingDetails}
+                            onClick={cancelEditingDetails}
+                        >
+                        Cancel
+                        </button>
+
+                        <button
+                            className="primary-button"
+                            type="submit"
+                            disabled={savingDetails || !editTitle.trim()}
+                        >
+                        {savingDetails
+                            ? 'Saving…'
+                            : 'Save changes'}
+                        </button>
+                    </form>
+                )}
             </section>
 
             <section className="issue-detail-section">
@@ -540,19 +667,22 @@ export function IssueDetailsPage() {
             <div className="issue-field">
                 <span>Due date</span>
 
-                <strong
-                className={
-                    issue.isOverdue
-                    ? 'danger-text'
-                    : ''
-                }
-                >
-                {issue.dueDate
-                    ? new Date(
-                        issue.dueDate,
-                    ).toLocaleDateString()
-                    : 'No due date'}
-                </strong>
+                {editingDetails ? (
+                    <input
+                        className="detail-date-input"
+                        type="date"
+                        value={editDueDate}
+                        onChange={(event) => setEditDueDate(event.target.value)}
+                    />
+                ) : (
+                    <strong
+                        className={issue.isOverdue ? 'danger-text' : ''}
+                    >
+                    {issue.dueDate
+                        ? new Date(issue.dueDate).toLocaleDateString()
+                        : 'No due date'}
+                    </strong>
+                )}
             </div>
 
             <div className="issue-field">
