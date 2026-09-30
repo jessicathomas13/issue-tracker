@@ -460,3 +460,78 @@ input:focus, textarea:focus, select:focus { border-color: #9ba3af; box-shadow: 0
 .edit-details-button:hover {
   background: #a7aaae;
 }
+
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.member-list {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24px;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 0;
+  border-bottom: 1px solid #eceef1;
+}
+
+.member-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.member-row strong {
+  font-size: 13px;
+}
+
+.member-row span {
+  color: #8d939b;
+  font-size: 12px;
+}
+
+.member-role {
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #f1f2f4;
+  color: #555a61 !important;
+  font-weight: 600;
+}
+
+.add-member-form {
+  padding-top: 20px;
+  border-top: 1px solid #eceef1;
+}
+
+.add-member-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    130px
+    auto;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.add-member-grid input,
+.add-member-grid select {
+  padding: 9px 10px;
+  border: 1px solid #dfe2e7;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+}
+
+@media (max-width: 700px) {
+  .add-member-grid {
+    grid-template-columns: 1fr;
+  }
+}

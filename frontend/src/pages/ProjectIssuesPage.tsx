@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { createIssue, getIssues, updateIssueStatus } from '../api/issues'
-import { getProjectMembers } from '../api/projects'
+import { addProjectMember, getProjectMembers } from '../api/projects'
 import { ApiError } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import type { Issue, IssuePriority, IssueStatus, ProjectMember, ProjectRole } from '../types'
@@ -25,9 +25,12 @@ export function ProjectIssuesPage() {
   const [status, setStatus] = useState<IssueStatus | ''>('')
   const [priority, setPriority] = useState<IssuePriority | ''>('')
   const [showCreate, setShowCreate] = useState(false)
+  const [showMembers, setShowMembers] = useState(false)
 
   const myRole: ProjectRole | undefined = members.find((member) => member.userId === auth?.userId)?.role
   const canEdit = myRole === 'Member' || myRole === 'Admin'
+
+  const isAdmin = myRole === 'Admin'
 
   async function loadData() {
     if (!auth || !Number.isFinite(id)) return
@@ -78,7 +81,23 @@ export function ProjectIssuesPage() {
           <h1>Issues</h1>
           <p>{myRole ? `Your access: ${myRole}` : 'Project workspace'}</p>
         </div>
-        {canEdit && <button className="primary-button" onClick={() => setShowCreate(true)}>+ New issue</button>}
+        <div className="page-header-actions">
+          <button
+            className="secondary-button"
+            onClick={() => setShowMembers(true)}
+          >
+            Members
+          </button>
+
+          {canEdit && (
+            <button
+              className="primary-button"
+              onClick={() => setShowCreate(true)}
+            >
+              + New issue
+            </button>
+          )}
+        </div>
       </header>
 
       {error && <div className="error-banner">{error}</div>}
@@ -140,6 +159,25 @@ export function ProjectIssuesPage() {
         </div>
       )}
 
+      {showMembers && auth && (
+        <ProjectMembersModal
+          members={members}
+          isAdmin={isAdmin}
+          onClose={() => setShowMembers(false)}
+          onAdd={async (email, role) => {await addProjectMember(
+            auth.token,
+            id,
+            email,
+            role,
+            )
+          
+            const updatedMembers = await getProjectMembers(auth.token, id)
+            
+            setMembers(updatedMembers)
+          }}
+        />
+      )}
+
       {showCreate && auth && (
         <CreateIssueModal
           members={members}
@@ -154,6 +192,8 @@ export function ProjectIssuesPage() {
     </div>
   )
 }
+
+
 
 function CreateIssueModal({ members, onClose, onCreate }: {
   members: ProjectMember[]
@@ -204,4 +244,157 @@ function CreateIssueModal({ members, onClose, onCreate }: {
       </section>
     </div>
   )
+}
+
+
+function ProjectMembersModal({
+    members,
+    isAdmin,
+    onClose,
+    onAdd,
+  }: {
+    members: ProjectMember[]
+    isAdmin: boolean
+    onClose: () => void
+    onAdd: (email: string, role: ProjectRole) => Promise<void>
+  }) {
+    const [email, setEmail] = useState('')
+    const [role, setRole] = useState<ProjectRole>('Member')
+
+    const [error, setError] = useState('')
+    const [saving, setSaving] = useState(false)
+
+    async function submit(event: FormEvent) {
+      event.preventDefault()
+
+      if (!email.trim()) {
+        return
+      }
+
+      setSaving(true)
+      setError('')
+
+      try {
+        await onAdd(
+          email.trim(),
+          role,
+        )
+
+        setEmail('')
+        setRole('Member')
+      } catch (err) {
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : 'Unable to add project member.',
+        )
+      } finally {
+        setSaving(false)
+      }
+    }
+
+    return (
+      <div
+        className="modal-backdrop"
+        onMouseDown={onClose}
+      >
+        <section
+          className="modal wide"
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          <div className="modal-header">
+            <div>
+              <span className="eyebrow">
+                Project access
+              </span>
+
+              <h2>Members</h2>
+            </div>
+
+            <button
+              className="icon-button"
+              onClick={onClose}
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="member-list">
+            {members.map((member) => (
+              <div
+                className="member-row"
+                key={member.userId}
+              >
+                <div>
+                  <strong>
+                    {member.name}
+                  </strong>
+
+                  <span>
+                    {member.email}
+                  </span>
+                </div>
+
+                <span className="member-role">
+                  {member.role}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {isAdmin && (
+            <form
+              className="add-member-form"
+              onSubmit={submit}
+            >
+              <span className="eyebrow">
+                Add member
+              </span>
+
+              <div className="add-member-grid">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="user@example.com"
+                  required
+                />
+
+                <select
+                  value={role}
+                  onChange={(event) => setRole(event.target.value as ProjectRole)}
+                >
+                  <option value="Viewer">
+                    Viewer
+                  </option>
+
+                  <option value="Member">
+                    Member
+                  </option>
+
+                  <option value="Admin">
+                    Admin
+                  </option>
+                </select>
+
+                <button
+                  className="primary-button"
+                  disabled={saving}
+                >
+                  {saving
+                    ? 'Adding…'
+                    : 'Add member'}
+                </button>
+              </div>
+
+              {error && (
+                <div className="error-banner">
+                  {error}
+                </div>
+              )}
+            </form>
+          )}
+        </section>
+      </div>
+    )
 }
